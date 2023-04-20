@@ -16,7 +16,7 @@ Type annotations were made for [lua-language-server](https://marketplace.visuals
 - Windows users may have to install luarocks/busted via [scoop.sh](https://scoop.sh/) ([see install steps](https://github.com/lunarmodules/busted/issues/715#issuecomment-1506833858))
 - Run `busted` in project root directory
 
-# Setup of example 
+# Setup of [example.lua](https://github.com/SauceChord/du-raiddatabank/blob/4ff52eb5e4a2ee441e751e010d0875dc42c181b7/src/example.lua)
 
 - Place a Programming Board
 - Place 8 Databanks
