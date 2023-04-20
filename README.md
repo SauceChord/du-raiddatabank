@@ -27,3 +27,24 @@ Type annotations were made for [lua-language-server](https://marketplace.visuals
 - Right click programming board, select *Advanced/Paste Lua configuration from clipboard*
 - Activate programming board
 - Look in Lua log window
+
+# Minimal code example of setting up raid:
+
+```lua
+local Hash = require("hash:FNV1A32")
+local Raid = require("databank:RaidDatabank")
+
+-- Assume databank1 and databank2 are slots of your 
+-- programming board and that their order never changes
+-- then this makes a two-databank raid
+local raid = Raid.New({ databank1, databank2 }, Hash)
+
+-- Use raid like you would use a databank but with less
+-- functions than the original, such as getClass et.c.
+if raid.getStringValue("setup") ~= "done" then
+    system.print("has not done setup")
+    raid.setStringValue("setup", "done")
+end
+
+unit.exit()
+```
