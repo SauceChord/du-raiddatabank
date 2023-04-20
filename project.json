@@ -1,0 +1,46 @@
+{
+  "cli": {
+    "fmtVersion": 3
+  },
+  "name": "du-raiddatabank",
+  "description": "",
+  "sourcePath": "src",
+  "outputPath": "out",
+  "libs": [
+    {
+      "id": "databank",
+      "type": "raw",
+      "path": "src/databank"
+    },
+    {
+      "id": "hash",
+      "type": "raw",
+      "path": "src/hash"
+    }
+  ],
+  "builds": {
+    "example": {
+      "name": "example",
+      "type": "control",
+      "slots": {}
+    }
+  },
+  "targets": {
+    "development": {
+      "name": "development",
+      "minify": false,
+      "handleErrors": false
+    },
+    "release": {
+      "name": "release",
+      "minify": true,
+      "handleErrors": true
+    }
+  },
+  "internalPaths": [
+    "autoconf/",
+    "cpml/",
+    "pl/",
+    "utils/event"
+  ]
+}

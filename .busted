@@ -1,0 +1,10 @@
+return {
+    _all = {
+        ROOT = {
+            "src/hash",
+            "src/databank",
+            },
+        coverage = false,
+        verbose = false,
+    }
+}

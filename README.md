@@ -1,0 +1,29 @@
+# Raid for Databank in Dual Universe
+
+Contains:
+
+- A logged databank decorator for demo/debugging
+- A raid databank composite
+- A string hashing function
+- A rather messy example (improvements appreciated)
+
+Depends on [DU-LuaC](https://github.com/wolfe-labs/DU-LuaC) to build example.
+
+Type annotations were made for [lua-language-server](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) for Visual Studio Code
+
+# Unit tests are executed with [busted](https://lunarmodules.github.io/busted/)
+
+- Windows users may have to install luarocks/busted via [scoop.sh](https://scoop.sh/) ([see install steps](https://github.com/lunarmodules/busted/issues/715#issuecomment-1506833858))
+- Run `busted` in project root directory
+
+# Setup of example 
+
+- Place a Programming Board
+- Place 8 Databanks
+- Rename the Databanks to Raid1/8 to Raid8/8
+- Link Raid Databanks to Programming Board
+- Run `du-lua build` to build the project
+- Copy contents from `out/release/example.json`
+- Right click programming board, select *Advanced/Paste Lua configuration from clipboard*
+- Activate programming board
+- Look in Lua log window
