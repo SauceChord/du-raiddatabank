@@ -1,4 +1,5 @@
 local Raid = require("databank.RaidDatabank")
+local UTF8Chunker = require("chunking.UTF8Chunker")
 
 describe("raid.RaidDatabank", function()
     describe("New", function()
@@ -6,6 +7,12 @@ describe("raid.RaidDatabank", function()
             local noHash = function(key) return 0 end
 
             assert.has.error(function() Raid.New({}, noHash) end, "Need at least one databank")
+        end)
+        it("rejects nil hash function", function()
+            local bank1 = {}
+
+            ---@diagnostic disable-next-line: param-type-mismatch
+            assert.has.error(function() Raid.New({bank1}, nil) end, "Need a hash function")
         end)
         it("rejects duplicate Databanks", function()
             local noHash = function(key) return 0 end
@@ -122,6 +129,16 @@ describe("raid.RaidDatabank", function()
             assert.spy(bank1.getKeyList).was_called(1)
             assert.spy(bank2.getKeyList).was_called(1)
         end)
+        it("produces a set of keys if duplicate entries were found", function()
+            local noHash = function(key) return 0 end
+            local bank1 = { getKeyList = function() return { "a", "b", "dupe" } end }
+            local bank2 = { getKeyList = function() return { "dupe", "c", "d" } end }
+
+            local raid = Raid.New({ bank1, bank2 }, noHash)
+            local keyList = raid.getKeyList()
+
+            assert.are_same({ "a", "b", "dupe", "c", "d" }, keyList)
+        end)
     end)
     describe("hasKey", function()
         it("calls hasKey on its respective bucket", function()
@@ -141,42 +158,66 @@ describe("raid.RaidDatabank", function()
         end)
     end)
     describe("clearValue", function()
-        it("calls clearValue on its respective bucket", function()
-            local hash = spy.new(function(key) return 2 end) -- Fake hash, ought to match bank1
-            local bank1 = { clearValue = function(key) return 1 end }
-            local bank2 = { clearValue = function(key) return 0 end }
+        it("calls clearValue on all buckets", function()
+            local noHash = spy.new(function(key) return 0 end)
+            local bank1 = { clearValue = function(key) return 1 end } -- Assume this databank has the key
+            local bank2 = { clearValue = function(key) return 0 end } -- Assume this databank doesnt
             spy.on(bank1, "clearValue")
             spy.on(bank2, "clearValue")
 
-            local raid = Raid.New({ bank1, bank2 }, hash)
+            local raid = Raid.New({ bank1, bank2 }, noHash)
             local success = raid.clearValue("key")
 
             assert.are_same(1, success)
-            assert.spy(hash).was_called_with("key")
+            assert.spy(noHash).was_not_called()
             assert.spy(bank1.clearValue).was_called_with("key")
-            assert.spy(bank2.clearValue).was_not_called()
+            assert.spy(bank2.clearValue).was_called_with("key")
         end)
     end)
     describe("setStringValue", function()
         it("calls setStringValue on its respective bucket", function()
             local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
-            local bank1 = { setStringValue = function(key, val) end }
-            local bank2 = { setStringValue = function(key, val) end }
+            local bank1 = { setStringValue = function(key, val) end, clearValue = function(key) return 0 end }
+            local bank2 = { setStringValue = function(key, val) end, clearValue = function(key) return 0 end }
             spy.on(bank1, "setStringValue")
             spy.on(bank2, "setStringValue")
+            spy.on(bank1, "clearValue")
+            spy.on(bank2, "clearValue")
 
+            -- Retaining version 1.0.0 behavior apart from calling clearValue prior to setting
+            -- a value when no chunker is specified in Raid.New
             local raid = Raid.New({ bank1, bank2 }, hash)
             raid.setStringValue("key", "value")
 
             assert.spy(hash).was_called_with("key")
+            assert.spy(bank1.clearValue).was_called(1)
+            assert.spy(bank2.clearValue).was_called(1)
             assert.spy(bank1.setStringValue).was_not_called()
             assert.spy(bank2.setStringValue).was_called_with("key", "value")
         end)
+        it("calls setStringValue on all buckets using a UTF8Chunker", function()
+            local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
+            local bank1 = { setStringValue = function(key, val) end, clearValue = function(key) return 0 end }
+            local bank2 = { setStringValue = function(key, val) end, clearValue = function(key) return 0 end }
+            spy.on(bank1, "setStringValue")
+            spy.on(bank2, "setStringValue")
+            spy.on(bank1, "clearValue")
+            spy.on(bank2, "clearValue")
+
+            local raid = Raid.New({ bank1, bank2 }, hash, UTF8Chunker.New(1))
+            raid.setStringValue("key", "value")
+
+            assert.spy(hash).was_called_with("key")
+            assert.spy(bank1.clearValue).was_called(1)
+            assert.spy(bank2.clearValue).was_called(1)
+            assert.spy(bank1.setStringValue).was_called_with("key", "ue")
+            assert.spy(bank2.setStringValue).was_called_with("key", "val")
+        end)
     end)
     describe("getStringValue", function()
-        it("calls getStringValue on its respective bucket", function()
+        it("calls getStringValue on all its buckets", function()
             local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
-            local bank1 = { getStringValue = function(key) return "bank1 value" end }
+            local bank1 = { getStringValue = function(key) return "" end } -- If the key doesn't exist, databanks return ""
             local bank2 = { getStringValue = function(key) return "bank2 value" end }
             spy.on(bank1, "getStringValue")
             spy.on(bank2, "getStringValue")
@@ -186,22 +227,41 @@ describe("raid.RaidDatabank", function()
 
             assert.are_same("bank2 value", value)
             assert.spy(hash).was_called_with("key")
-            assert.spy(bank1.getStringValue).was_not_called()
+            assert.spy(bank1.getStringValue).was_called_with("key")
+            assert.spy(bank2.getStringValue).was_called_with("key")
+        end)
+        it("concatenates chunks from all buckets", function()
+            local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
+            local bank1 = { getStringValue = function(key) return "ue" end } -- last chunk
+            local bank2 = { getStringValue = function(key) return "val" end } -- first chunk
+            spy.on(bank1, "getStringValue")
+            spy.on(bank2, "getStringValue")
+
+            local raid = Raid.New({ bank1, bank2 }, hash)
+            local value = raid.getStringValue("key")
+
+            assert.are_same("value", value)
+            assert.spy(hash).was_called_with("key")
+            assert.spy(bank1.getStringValue).was_called_with("key")
             assert.spy(bank2.getStringValue).was_called_with("key")
         end)
     end)
     describe("setIntValue", function()
         it("calls setIntValue on its respective bucket", function()
             local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
-            local bank1 = { setIntValue = function(key, val) end }
-            local bank2 = { setIntValue = function(key, val) end }
+            local bank1 = { setIntValue = function(key, val) end, clearValue = function(key) return 0 end }
+            local bank2 = { setIntValue = function(key, val) end, clearValue = function(key) return 0 end }
             spy.on(bank1, "setIntValue")
             spy.on(bank2, "setIntValue")
+            spy.on(bank1, "clearValue")
+            spy.on(bank2, "clearValue")
 
             local raid = Raid.New({ bank1, bank2 }, hash)
             raid.setIntValue("key", 2)
 
             assert.spy(hash).was_called_with("key")
+            assert.spy(bank1.clearValue).was_called(1)
+            assert.spy(bank2.clearValue).was_called(1)
             assert.spy(bank1.setIntValue).was_not_called()
             assert.spy(bank2.setIntValue).was_called_with("key", 2)
         end)
@@ -226,15 +286,19 @@ describe("raid.RaidDatabank", function()
     describe("setFloatValue", function()
         it("calls setFloatValue on its respective bucket", function()
             local hash = spy.new(function(key) return 3 end) -- Fake hash, ought to match bank2
-            local bank1 = { setFloatValue = function(key, val) end }
-            local bank2 = { setFloatValue = function(key, val) end }
+            local bank1 = { setFloatValue = function(key, val) end, clearValue = function(key) return 0 end }
+            local bank2 = { setFloatValue = function(key, val) end, clearValue = function(key) return 0 end }
             spy.on(bank1, "setFloatValue")
             spy.on(bank2, "setFloatValue")
+            spy.on(bank1, "clearValue")
+            spy.on(bank2, "clearValue")
 
             local raid = Raid.New({ bank1, bank2 }, hash)
             raid.setFloatValue("key", 2.2)
 
             assert.spy(hash).was_called_with("key")
+            assert.spy(bank1.clearValue).was_called(1)
+            assert.spy(bank2.clearValue).was_called(1)
             assert.spy(bank1.setFloatValue).was_not_called()
             assert.spy(bank2.setFloatValue).was_called_with("key", 2.2)
         end)

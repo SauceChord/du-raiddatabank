@@ -3,6 +3,7 @@ return {
         ROOT = {
             "src/hash",
             "src/databank",
+            "src/chunking",
             },
         coverage = false,
         verbose = false,

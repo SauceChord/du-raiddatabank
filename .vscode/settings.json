@@ -5,6 +5,7 @@
         "spy",
         "system",
         "library",
-        "unit"
+        "unit",
+        "before_each"
     ]
 }
