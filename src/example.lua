@@ -6,6 +6,10 @@ local LoggedDatabank = require("databank:LoggedDatabank")
 ---@type fun(str:string):integer
 local Hasher = require("hash:FNV1A32")
 
+---Chunks strings up in pieces
+---@type UTF8Chunker
+local Chunker = require("chunking:UTF8Chunker")
+
 ---Spreads out data over many databanks by hashing keys
 ---@type RaidDatabank
 local RaidDatabank = require("databank:RaidDatabank")
@@ -29,16 +33,23 @@ for i, databank in ipairs(databanks) do
 end
 
 -- Just to show what a logged databank does (see Lua message tab)
-loggedDatabanks[5].setIntValue("Gone", 10) -- Outputs: setIntValue(Gone, 10) databank 'Raid5/8'
-loggedDatabanks[5].clearValue("Gone") -- Outputs: clearValue(Gone) databank 'Raid5/8' : 1
+loggedDatabanks[5].setIntValue("Gone", 10)
+loggedDatabanks[5].clearValue("Gone")
 
--- Create a raid of logged databanks. 
-local raid = RaidDatabank.New(loggedDatabanks, Hasher)
+-- Create a raid of logged databanks.
+-- Strings get chunked if they are longer than 50 characters.
+local raid = RaidDatabank.New(loggedDatabanks, Hasher, Chunker.New(50))
 
 -- Demo some load balancing of databank usage
 raid.hasKey("Foo") -- Outputs: hasKey(Foo) databank 'Raid8/8' : 0
 raid.hasKey("Bar") -- Outputs: hasKey(Bar) databank 'Raid3/8' : 0
 raid.hasKey("Data_" .. math.random(500)) -- Who knows which databank it'll choose?
+
+-- Demo storing and retrieving a 80000 character string
+if 0 == raid.hasKey("largeString") then
+  raid.setStringValue("largeString", string.rep("x", 80000))
+end
+assert(raid.getStringValue("largeString") == string.rep("x", 80000))
 
 -- Demo: Update the value of "Dots". In my example it is stored in Raid2/8
 local dots = raid.getStringValue("Dots") .. "." -- Add a . to the string

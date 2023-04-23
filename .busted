@@ -1,9 +1,9 @@
 return {
     _all = {
         ROOT = {
-            "src/hash",
-            "src/databank",
-            "src/chunking",
+            "libs/hash",
+            "libs/databank",
+            "libs/chunking",
             },
         coverage = false,
         verbose = false,

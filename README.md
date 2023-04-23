@@ -28,16 +28,17 @@ Type annotations were made for [lua-language-server](https://marketplace.visuals
 - Activate programming board
 - Look in Lua log window
 
-# Minimal code example of setting up raid:
+# Minimal code example of setting up raid with chunking:
 
 ```lua
 local Hash = require("hash:FNV1A32")
+local Chunker = require("chunking:UTF8Chunker")
 local Raid = require("databank:RaidDatabank")
 
 -- Assume databank1 and databank2 are slots of your 
 -- programming board and that their order never changes
 -- then this makes a two-databank raid
-local raid = Raid.New({ databank1, databank2 }, Hash)
+local raid = Raid.New({ databank1, databank2 }, Hash, Chunker.New(50))
 
 -- Use raid like you would use a databank but with less
 -- functions than the original, such as getClass et.c.
