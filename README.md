@@ -5,6 +5,7 @@ Contains:
 - A logged databank decorator for demo/debugging
 - A raid databank composite
 - A string hashing function
+- A UTF-8 string chunker
 - A rather messy example (improvements appreciated)
 
 Depends on [DU-LuaC](https://github.com/wolfe-labs/DU-LuaC) to build example.
