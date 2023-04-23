@@ -5,6 +5,7 @@ Contains:
 - A logged databank decorator for demo/debugging
 - A raid databank composite
 - A string hashing function
+- A UTF-8 string chunker
 - A rather messy example (improvements appreciated)
 
 Depends on [DU-LuaC](https://github.com/wolfe-labs/DU-LuaC) to build example.
@@ -16,7 +17,7 @@ Type annotations were made for [lua-language-server](https://marketplace.visuals
 - Windows users may have to install luarocks/busted via [scoop.sh](https://scoop.sh/) ([see install steps](https://github.com/lunarmodules/busted/issues/715#issuecomment-1506833858))
 - Run `busted` in project root directory
 
-# Setup of [example.lua](https://github.com/SauceChord/du-raiddatabank/blob/4ff52eb5e4a2ee441e751e010d0875dc42c181b7/src/example.lua)
+# Setup of [example.lua](https://github.com/SauceChord/du-raiddatabank/blob/7a3fd1fefc1a531dabf9211290060b198c8d0060/src/example.lua)
 
 - Place a Programming Board
 - Place 8 Databanks
