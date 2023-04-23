@@ -1,4 +1,4 @@
-local hash = require("libs.hash.FNV1A32")
+local hash = require("lib.hash.FNV1A32")
 
 -- Most expected values have been lifted from https://md5calc.com/hash using the FNV1A32 Algorithm
 describe("hash.FNV1A32", function()

@@ -1,5 +1,5 @@
-local Raid = require("libs.databank.RaidDatabank")
-local UTF8Chunker = require("libs.chunking.UTF8Chunker")
+local Raid = require("lib.databank.RaidDatabank")
+local UTF8Chunker = require("lib.chunking.UTF8Chunker")
 
 describe("raid.RaidDatabank", function()
     describe("New", function()

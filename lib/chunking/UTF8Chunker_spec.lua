@@ -1,4 +1,4 @@
-local Chunker = require("libs.chunking.UTF8Chunker")
+local Chunker = require("lib.chunking.UTF8Chunker")
 
 describe("chunking.UTF8Chunker", function()
     describe("function New", function()
