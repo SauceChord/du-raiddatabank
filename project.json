@@ -10,17 +10,17 @@
     {
       "id": "databank",
       "type": "raw",
-      "path": "libs/databank"
+      "path": "lib/databank"
     },
     {
       "id": "hash",
       "type": "raw",
-      "path": "libs/hash"
+      "path": "lib/hash"
     },
     {
       "id": "chunking",
       "type": "raw",
-      "path": "libs/chunking"
+      "path": "lib/chunking"
     }
   ],
   "builds": {
